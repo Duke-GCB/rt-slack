@@ -1,4 +1,4 @@
-e HTTP::Request::Common qw(POST);
+use HTTP::Request::Common qw(POST);
 use LWP::UserAgent;
 use JSON;
 use Getopt::Std;
