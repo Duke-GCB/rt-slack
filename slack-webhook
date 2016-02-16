@@ -1,0 +1,52 @@
+e HTTP::Request::Common qw(POST);
+use LWP::UserAgent;
+use JSON;
+use Getopt::Std;
+
+my $hookurl = 'https://hooks.slack.com/services/T0000000';
+my $T_Obj = $self->TicketObj;
+my $default_channel = '#helpdesk';
+my $ticket_id = $T_Obj->id;
+my $requestor_emails = $T_Obj->RequestorAddresses;
+
+my $payload = {
+           channel => $default_channel,
+           username => 'RT',
+           icon_emoji => ':rt:',
+           text => $T_Obj->Subject,
+             };
+
+$payload->{attachments} = [
+    {
+      fallback => "Ticket: $T_Obj->Subject",
+      color => 'danger',
+      fields => [
+        {
+          title => 'Ticket url',
+          value => "<https://your.rt.host.name/Ticket/Display.html?id=$ticket_id>",
+          short => 'false',
+        },
+        {
+          title => 'Requestor',
+          value => "$requestor_emails",
+          short => 'false',
+        }
+      ],
+    },
+  ];
+
+my $ua = LWP::UserAgent->new;
+$ua->timeout(15);
+
+my $req = POST("${hookurl}", ['payload' => encode_json($payload)]);
+
+my $resp = $ua->request($req);
+
+if ($resp->is_success) {
+  #print $resp->decoded_content;  # or whatever
+}
+else {
+  $RT::Logger->error($resp->status_line); 
+  die $resp->status_line;
+}
+return 1;
